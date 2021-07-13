@@ -283,24 +283,38 @@ def view_image(uri):
     if string_to_bool(getenv('WEBVIEW_DEBUG', '0')):
         logging.info(browser.process.stdout)
 
+# replace with https://forums.screenly.io/t/looping-video-for-a-virtual-fireplace/145/11
+#def view_video(uri, duration):
+#    logging.debug('Displaying video %s for %s ', uri, duration)
+#
+#    media_player.set_asset(uri, duration)
+#    media_player.play()
+#
+#    view_image('null')
+#
+#    try:
+#        while media_player.is_playing():
+#            watchdog()
+#            sleep(1)
+#    except sh.ErrorReturnCode_1:
+#        logging.info('Resource URI is not correct, remote host is not responding or request was rejected.')
+#
+#    media_player.stop()
 
 def view_video(uri, duration):
     logging.debug('Displaying video %s for %s ', uri, duration)
 
-    media_player.set_asset(uri, duration)
-    media_player.play()
+    if arch in ('armv6l', 'armv7l'):
+        player_args = ['omxplayer', uri, '--loop', '--no-osd']
+        player_kwargs = {'o': settings['audio_output'], '_bg': True, '_ok_code': [0, 124, 143]}
+    else:
+        player_args = ['mplayer', uri, '-nosound']
+        player_kwargs = {'_bg': True, '_ok_code': [0, 124]}
 
-    view_image('null')
+    #if duration and duration != 'N/A':
+       # player_args = ['timeout', VIDEO_TIMEOUT + int(duration.split('.')[0])] + player_args
 
-    try:
-        while media_player.is_playing():
-            watchdog()
-            sleep(1)
-    except sh.ErrorReturnCode_1:
-        logging.info('Resource URI is not correct, remote host is not responding or request was rejected.')
-
-    media_player.stop()
-
+    run = sh.Command(player_args[0])(*player_args[1:], **player_kwargs)
 
 def load_settings():
     """
